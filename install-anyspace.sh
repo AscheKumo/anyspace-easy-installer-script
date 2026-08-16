@@ -50,8 +50,12 @@ on_error() {
 trap 'on_error $LINENO' ERR
 
 random_string() {
-  # 20-char alnum string
-  tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "${1:-20}"
+  # 20-char alnum string. The `|| true` matters: head -c closes the pipe
+  # once it has enough bytes, which sends tr a SIGPIPE (exit 141) even
+  # though the output itself is already complete and correct — without
+  # `|| true`, `set -o pipefail` would treat that as a real failure and
+  # abort the whole script under `set -e`.
+  tr -dc 'A-Za-z0-9' < /dev/urandom | head -c "${1:-20}" || true
 }
 
 sql_escape() {
